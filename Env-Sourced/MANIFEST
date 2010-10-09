@@ -1,0 +1,9 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+lib/Env/Sourced.pm-orig
+t/pod_coverage.t
+t/pod.t
+t/sourced.t
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -1,0 +1,90 @@
+NAME
+    Env::Sourced - Allows you to import environment variables from a shell
+    program
+
+SYNOPSIS
+     use Env::Sourced qw(/first/file/to/include.sh /second/file/to/include.sh);
+
+DESCRIPTION
+    In the UNIX shell, when you source a file the shell reads and executes
+    the commands from a specified file in the current shell environment.
+    This is opposed to simply executing the specified file, which would
+    cause it to run in its own shell environment. Because the executed
+    script runs in the current environment, any environment variables
+    exported by the sub-script will be included in the calling scripts
+    environment.
+
+    On many boxes there are legacy shell scripts which serve as central
+    points for holding variables that are used in other scripts. These
+    variable scripts are sourced in all of the worker scripts so that they
+    can share a common environment.
+
+    This works fine for shell scripts, but can be problematic for Perl
+    scripts. To pick up the shared environment, they typically must be
+    wrapped by a shell script that does the sourcing for the Perl script:
+
+      #/bin/ksh
+      . /file/to/include.sh
+      $@
+
+    Or the Perl interpreter must be aliased to include the environment:
+
+      alias perl='. /file/to/include.sh;perl'
+
+    Or any one of many other hacks must be performed to get the correct
+    environment for your Perl scripts. And, in the end you have a script
+    that cannot run without having variables that are defined in another
+    script, but you have no clear note of what script needs to be included.
+
+    This is why "Env::Sourced" came about. It allows for you to specify in
+    your script what files are needed to set up the environment needed by
+    your script to run. It then takes these files and merges the environment
+    defined by them into your current environment. This allows your script
+    to access the sourced environment through the %ENV hash or directly
+    through scalars and arrays if you use Env.
+
+    To use the module, you simply include it in your code and tell it which
+    scripts to merge into your environment. The scripts will be processed in
+    the order in which they are passed to the module, so if they both set
+    the same variable, only the last setting will be kept.
+
+     use Env::Sourced qw(/first/file/to/include.sh /second/file/to/include.sh);
+
+    It is expected that the scripts that are being called will execute
+    cleanly. They can output to standard out and standard error (all output
+    will be passed through standard error anyway), but they must exit
+    without errors. If they do have errors, chance are you will get a
+    message like "Can't use an undefined value as a HASH reference..." and
+    your script will terminate.
+
+INSTALL
+    This module is installed in the standard Perl style. Just run the
+    following commands and hope that you don't have any errors :)
+
+            perl Makefile.PL
+            make
+            make test
+            make install
+
+BUGS/CAVEATS
+    *   There are times when a script seems to be running fine when you
+        execute it on the command line, but it errors out when being sourced
+        by this module. One of the primary reasons for this is the combining
+        of variable setting and exporting in the same line in your shell
+        script. For instance, you might have:
+
+          export MY_VAR=xyz
+
+        And when you use the file with this module you get a "Can't use an
+        undefined value as a HASH reference" error. The common fix is to
+        split variable setting and exporting onto multiple lines:
+
+          MY_VAR=xyz
+          export MY_VAR
+
+        This is not required for all systems, but it has been known observed
+        on some systems.
+
+AUTHOR
+    Josh McAdams <me@joshmcadams.com>
+
